@@ -2,7 +2,7 @@ import logging
 import threading
 from typing import Dict, List, Optional, Tuple
 
-from coexistanceSimpy.Coexistance import *
+from coexistanceSimpy.Coexistence import *
 
 
 def single_run(
