@@ -63,6 +63,8 @@ class Station:
         self.channel = channel  # channel obj
         env.process(self.start())  # starting simulation process
         self.process = None  # waiting back off process
+        self.channel.airtime_data.update({name: 0})
+        self.channel.airtime_control.update({name: 0})
 
     def start(self):
         while True:
@@ -122,6 +124,7 @@ class Station:
                 was_sent = self.check_collision()  # check if collision occurred
 
                 if was_sent:  # transmission successful
+                    self.channel.airtime_control[self.name] += self.times.get_ack_frame_time()
                     yield self.env.timeout(self.times.get_ack_frame_time())  # wait ack
                     self.channel.tx_list.clear()  # clear transmitting list
                     self.channel.tx_queue.release(res)  # leave the transmitting queue
@@ -185,6 +188,7 @@ class Station:
         self.succeeded_transmissions += 1
         self.failed_transmissions_in_row = 0
         self.channel.bytes_sent += self.frame_to_send.data_size
+        self.channel.airtime_data[self.name] += self.frame_to_send.frame_time
         return True
 
 
@@ -194,6 +198,8 @@ class Channel:
     tx_lock: simpy.Resource  # channel lock (locked when there is ongoing transmission)
     n_of_stations: int  # number of transmitting stations in the channel
     backoffs: Dict[int, Dict[int, int]]
+    airtime_data: Dict[str, int]
+    airtime_control: Dict[str, int]
     tx_list: List[Station] = field(default_factory=list)  # transmitting stations in the channel
     back_off_list: List[Station] = field(default_factory=list)  # stations in backoff phase
     failed_transmissions: int = 0  # total failed transmissions
@@ -224,6 +230,8 @@ def run_simulation(
         simulation_time: int,
         config: Config,
         backoffs: Dict[int, Dict[int, int]],
+        airtime_data: Dict[str, int],
+        airtime_control: Dict[str, int],
 ):
     random.seed(seed)
     environment = simpy.Environment()
@@ -232,6 +240,8 @@ def run_simulation(
         simpy.Resource(environment, capacity=1),
         number_of_stations,
         backoffs,
+        airtime_data,
+        airtime_control,
     )
 
     for i in range(1, number_of_stations + 1):
@@ -240,6 +250,9 @@ def run_simulation(
     environment.run(until=simulation_time * 1000000)
 
     p_coll = "{:.4f}".format(channel.failed_transmissions / (channel.failed_transmissions + channel.succeeded_transmissions))
+
+    #normalizedChannelOccupancyTime = channel.succeeded_transmissions * ()
+
     print(
         f"SEED = {seed} N={number_of_stations} CW_MIN = {config.cw_min} CW_MAX = {config.cw_max}  PCOLL: {p_coll} THR:"
         f" {(channel.bytes_sent * 8) / (simulation_time * 1000000)} "
@@ -247,10 +260,46 @@ def run_simulation(
         f" SUCCEEDED_TRANSMISSION {channel.succeeded_transmissions}"
     )
 
-    with open("results.csv", mode='a', newline="") as result_file:
+    print(channel.airtime_data)
+    print(channel.airtime_control)
+
+    #colison probability:
+    # with open("results.csv", mode='a', newline="") as result_file:
+    #     result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #
+    #     colision = (channel.failed_transmissions / (channel.failed_transmissions + channel.succeeded_transmissions)) * 100
+    #
+    #     result_adder.writerow(
+    #         [seed, number_of_stations, channel.failed_transmissions, channel.succeeded_transmissions, colision])
+    
+    #airtime 34:
+    # with open("airtime34.csv", mode='a', newline="") as result_file:
+    #     result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #
+    #     channel_occupancy_time = 0
+    #     channel_efficiency = 0
+    #     time = simulation_time * 1000000
+    #     for i in range(1, number_of_stations + 1):
+    #         channel_occupancy_time += channel.airtime_data["Station {}".format(i)] + channel.airtime_control["Station {}".format(i)]
+    #         channel_efficiency += channel.airtime_data["Station {}".format(i)]
+    #
+    #     normalized_channel_occupancy_time = channel_occupancy_time / time
+    #     normalized_channel_efficiency = channel_efficiency / time
+    #
+    #
+    #     result_adder.writerow(
+    #         [seed, number_of_stations, normalized_channel_occupancy_time, normalized_channel_efficiency])
+
+    #airtime 12:
+    with open("airtime12.csv", mode='a', newline="") as result_file:
         result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        colision = (channel.failed_transmissions / (channel.failed_transmissions + channel.succeeded_transmissions)) * 100
 
-        result_adder.writerow(
-            [seed, number_of_stations, channel.failed_transmissions, channel.succeeded_transmissions, colision])
+        time = simulation_time * 1000000
+        time_conv = 1000000
+        for i in range(1, number_of_stations + 1):
+            station_airtime = (channel.airtime_data["Station {}".format(i)] + channel.airtime_control["Station {}".format(i)]) / time_conv
+            norm_station_airtime = (channel.airtime_data["Station {}".format(i)] + channel.airtime_control["Station {}".format(i)]) / time
+            result_adder.writerow([seed, i, station_airtime, norm_station_airtime])
+
+
