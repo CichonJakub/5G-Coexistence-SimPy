@@ -73,7 +73,7 @@ def print_airtime_per_station():
 
     # plotting
     # 5G _ JC
-    ax = data2.plot(title='Time of airtime per station', marker='o', legend=True, ylim=(0, 20))
+    ax = data2.plot.bar(title='Time of airtime per station', legend=True, ylim=(0, 20))
     ax.set(xlabel="Number of transmitting Wi-Fi stations", ylabel="time in secounds")
     # ax.legend(['Normalized Channel Occupancy', 'Channel Efficiency'])
     # # DCF - PT
@@ -95,7 +95,7 @@ def print_airtime_norm_per_station():
 
     # plotting
     # 5G _ JC
-    ax = data2.plot(title='Normalized time of airtime per station', marker='o', legend=True, ylim=(0, 0.15))
+    ax = data2.plot.bar(title='Normalized time of airtime per station', legend=True, ylim=(0, 0.15))
     ax.set(xlabel="Number of transmitting Wi-Fi stations", ylabel="% of time")
     # ax.legend(['Normalized Channel Occupancy', 'Channel Efficiency'])
     # # DCF - PT
@@ -105,7 +105,7 @@ def print_airtime_norm_per_station():
 
     # Save to file
     plt.tight_layout()
-    plt.savefig('airtime2.png')
+    plt.savefig('airtime22.png')
 
 
 if __name__ == "__main__":
