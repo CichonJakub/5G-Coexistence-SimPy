@@ -111,5 +111,5 @@ def print_airtime_norm_per_station():
 if __name__ == "__main__":
     #print_collision_prob()
     #print_airtime_34()
-    #print_airtime_per_station()
+    print_airtime_per_station()
     print_airtime_norm_per_station()
