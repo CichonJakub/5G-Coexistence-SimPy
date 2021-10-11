@@ -289,9 +289,9 @@ def run_simulation(
     #
     #     result_adder.writerow(
     #         [seed, number_of_stations, normalized_channel_occupancy_time, normalized_channel_efficiency])
-
+    
     #airtime 12:
-    with open("airtime12.csv", mode='a', newline="") as result_file:
+    with open("airtime12_new2.csv", mode='a', newline="") as result_file:
         result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
 
@@ -300,6 +300,6 @@ def run_simulation(
         for i in range(1, number_of_stations + 1):
             station_airtime = (channel.airtime_data["Station {}".format(i)] + channel.airtime_control["Station {}".format(i)]) / time_conv
             norm_station_airtime = (channel.airtime_data["Station {}".format(i)] + channel.airtime_control["Station {}".format(i)]) / time
-            result_adder.writerow([seed, i, station_airtime, norm_station_airtime])
+            result_adder.writerow([number_of_stations, seed, i, station_airtime, norm_station_airtime])
 
 
