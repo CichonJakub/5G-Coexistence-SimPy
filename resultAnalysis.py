@@ -173,7 +173,7 @@ def print_airtime_per_station():
 
     # plotting
     # 5G _ JC
-    ax = data2.plot.bar(title='Per station airtime', legend=False, ylim=(0, 80))
+    ax = data2.plot.bar(title='Per station airtime', legend=False, ylim=(0, 100))
     #ax.set(xlabel="Number of transmitting Wi-Fi stations", ylabel="% of time")
     ax.set_xlabel('Number of transmitting Wi-Fi stations', fontsize=14)
     ax.set_ylabel('Mean airtime', fontsize=14)
@@ -183,10 +183,44 @@ def print_airtime_per_station():
     plt.savefig('results/airtime_per_station.png')
 
 
+def print_nru_airtime():
+    # read data from csv
+    viridis(0.0, 1.0, 4)
+
+    data = pd.read_csv('nru_airtime2.csv', delimiter=',')
+
+    # group by number of stations and calculate mean colision proob
+    data2 = data.groupby(['Gnb'])['ChannelOccupancy'].mean()
+    data3 = data.groupby(['Gnb'])['ChannelEfficiency'].mean()
+
+
+
+    # plotting
+    # 5G _ JC
+    ax = data2.plot(title='NR-U airtime', marker='o', legend=True, ylim=(0, 1))
+    ax2 = data3.plot(title='NR-U airtime', marker='x', legend=True, ylim=(0, 1))
+
+
+
+    ax2.legend(['NR-U occupancy', 'NR-U efficiency'])
+    ax2.set_xlabel('Number of transmitting Gnbs', fontsize=14)
+    ax2.set_ylabel('Normalized airtime', fontsize=14)
+
+    # # DCF - PT
+    # ax2 = data2.plot(title='5G_Coexistance vs DCF simulators', marker='x', legend=True, ylim=(0, 40))
+    # ax2.set(xlabel="Number of transmitting Wi-Fi stations", ylabel="Collision probability")
+    # ax2.legend(['5G-Coexistance-Simpy', 'DCF-Simpy'])
+
+    # Save to file
+    plt.tight_layout()
+    plt.savefig('results/nru_airtime4.png')
+
 if __name__ == "__main__":
     #print_collision_prob()
     #print_airtime_34()
     #print_airtime_norm_per_station()
     #print_airtime_per_station()
     #print_channel_occupancy()
-    print_channel_efficency()
+    #print_channel_efficency()
+
+    print_nru_airtime()

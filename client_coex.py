@@ -31,4 +31,18 @@ if __name__ == "__main__":
 
     #run_changing_stations(runs=5, seed=128, stations_start=1, stations_end=10, simulation_time=100, payload_size=1472, cw_min=15, cw_max=1023, r_limit=7, mcs_value=7)
 
-    single_run(seeds=121, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15, cw_max=1023, r_limit=7, mcs_value=7)
+    #single_run(seeds=121, stations_number=0, gnb_number=2, simulation_time=100, payload_size=1472, cw_min=15, cw_max=1023, r_limit=7, mcs_value=7)
+
+    # single_run(seeds=122, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
+    #            cw_max=1023, r_limit=7, mcs_value=7)
+    # single_run(seeds=123, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
+    #            cw_max=1023, r_limit=7, mcs_value=7)
+    # single_run(seeds=124, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
+    #            cw_max=1023, r_limit=7, mcs_value=7)
+    # single_run(seeds=125, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
+    #            cw_max=1023, r_limit=7, mcs_value=7)
+
+    for k in range(1, 11):
+        for var in range(120, 121):
+            single_run(seeds=var, stations_number=0, gnb_number=k, simulation_time=100, payload_size=1472, cw_min=15,
+                       cw_max=1023, r_limit=7, mcs_value=7)
