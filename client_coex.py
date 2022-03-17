@@ -1,8 +1,5 @@
-import logging
-import threading
-from typing import Dict, List, Optional, Tuple
 
-from coexistanceSimpy.Coex2 import *
+from coexistanceSimpy.Coexistence import *
 
 
 def single_run(
@@ -17,10 +14,15 @@ def single_run(
         mcs_value: int,
 ):
     backoffs = {key: {stations_number: 0} for key in range(cw_max + 1)}
-    airtime_data = {"Station {}".format(i): 0 for i in range(1, stations_number + gnb_number+ 1)}
-    airtime_control = {"Station {}".format(i): 0 for i in range(1, stations_number + gnb_number + 1)}
-    run_simulation(stations_number, gnb_number, seeds, simulation_time, Config(payload_size, cw_min, cw_max, r_limit, mcs_value),
-                   backoffs, airtime_data, airtime_control)
+    airtime_data = {"Station {}".format(i): 0 for i in range(1, stations_number + 1)}
+    airtime_control = {"Station {}".format(i): 0 for i in range(1, stations_number + 1)}
+    airtime_data_NR = {"Gnb {}".format(i): 0 for i in range(1, gnb_number + 1)}
+    airtime_control_NR = {"Gnb {}".format(i): 0 for i in range(1, gnb_number + 1)}
+    # run_simulation(stations_number, gnb_number, seeds, simulation_time, Config(payload_size, cw_min, cw_max, r_limit, mcs_value),
+    #                backoffs, airtime_data, airtime_control)
+    run_simulation(stations_number, gnb_number, seeds, simulation_time,
+                   Config(payload_size, cw_min, cw_max, r_limit, mcs_value),
+                   backoffs, airtime_data, airtime_control, airtime_data_NR, airtime_control_NR)
 
 
 
@@ -29,20 +31,21 @@ def single_run(
 if __name__ == "__main__":
     #  running diferent scenarios of simulation
 
-    #run_changing_stations(runs=5, seed=128, stations_start=1, stations_end=10, simulation_time=100, payload_size=1472, cw_min=15, cw_max=1023, r_limit=7, mcs_value=7)
+    # performing single run
+    number = 1
+    single_run(seeds=145324
+               , stations_number=number, gnb_number=number, simulation_time=10, payload_size=1472, cw_min=15, cw_max=63, r_limit=7, mcs_value=7)
 
-    #single_run(seeds=121, stations_number=0, gnb_number=2, simulation_time=100, payload_size=1472, cw_min=15, cw_max=1023, r_limit=7, mcs_value=7)
-
-    # single_run(seeds=122, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
-    #            cw_max=1023, r_limit=7, mcs_value=7)
-    # single_run(seeds=123, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
-    #            cw_max=1023, r_limit=7, mcs_value=7)
-    # single_run(seeds=124, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
-    #            cw_max=1023, r_limit=7, mcs_value=7)
-    # single_run(seeds=125, stations_number=0, gnb_number=2, simulation_time=10, payload_size=1472, cw_min=15,
-    #            cw_max=1023, r_limit=7, mcs_value=7)
-
-    for k in range(1, 11):
-        for var in range(120, 121):
-            single_run(seeds=var, stations_number=0, gnb_number=k, simulation_time=100, payload_size=1472, cw_min=15,
-                       cw_max=1023, r_limit=7, mcs_value=7)
+    # performing multiple runs
+    # list = []
+    # for radn in range(1, 10):
+    #     n = random.randint(1000, 10000)
+    #     list.append(n)
+    #
+    # print(list)
+    #
+    # for var in list:
+    #     #for k in range(2, 12):
+    #     # k = 4
+    #     single_run(seeds=var, stations_number=k, gnb_number=k, simulation_time=1, payload_size=1472, cw_min=15,
+    #                    cw_max=1023, r_limit=7, mcs_value=7)

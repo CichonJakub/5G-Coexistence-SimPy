@@ -16,7 +16,7 @@ class Times:
 
     t_slot = 9  # [us]
     t_sifs = 16  # [us]
-    t_difs = 2 * t_slot + t_sifs  # [us]
+    t_difs = 3 * t_slot + t_sifs  # [us]
     ack_timeout = 45  # [us]
 
     # Mac overhead
