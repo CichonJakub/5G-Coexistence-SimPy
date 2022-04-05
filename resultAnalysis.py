@@ -58,11 +58,11 @@ def print_airtime_34():
 
     # plotting
     # 5G _ JC
-    ax = data2.plot(title='Airtime 5G-Coexistance-Simpy vs DCF-Simpy', marker='o', legend=True, ylim=(0, 1))
-    ax2 = data3.plot(title='Airtime 5G-Coexistance-Simpy vs DCF-Simpy', marker='o', legend=True, ylim=(0, 1))
+    ax = data2.plot( marker='o', legend=True, ylim=(0, 1))
+    ax2 = data3.plot( marker='o', legend=True, ylim=(0, 1))
 
-    ax3 = data2dcf.plot(title='Airtime 5G-Coexistance-Simpy vs DCF-Simpy', marker='x', legend=True, ylim=(0, 1), linestyle= '--')
-    ax4 = data3dcf.plot(title='Airtime 5G-Coexistance-Simpy vs DCF-Simpy', marker='x', legend=True, ylim=(0, 1), linestyle= '--')
+    ax3 = data2dcf.plot( marker='x', legend=True, ylim=(0, 1), linestyle= '--')
+    ax4 = data3dcf.plot( marker='x', legend=True, ylim=(0, 1), linestyle= '--')
 
     ax2.legend(['5G-Coex-SimPy occupancy', '5G-Coex-SimPy efficiency', 'DCF-SimPy occupancy', 'DCF-SimPy efficiency' ])
     ax2.set_xlabel('Number of transmitting Wi-Fi stations', fontsize=14)
@@ -75,7 +75,7 @@ def print_airtime_34():
 
     # Save to file
     plt.tight_layout()
-    plt.savefig('results/airtime_efficiency_and_occupancy.png')
+    plt.savefig('results/airtime_efficiency_and_occupancy2.png')
 
 
 def print_channel_occupancy():
@@ -457,11 +457,50 @@ def print_coex_gap_matlab():
     plt.tight_layout()
     plt.savefig('results/coex_comparison_gap3.png')
 
+def valid_wifi():
+    viridis(0.0, 1.0, 2)
+
+    dcf = pd.read_csv('da/dcf_wifi.csv', delimiter=',')
+    matlab = pd.read_csv('da/matlab_wifi.csv', delimiter=',')
+
+    dcf2 = dcf.groupby(['WiFi'])['ChannelOccupancy'].mean()
+    #data_my_gnb = data_my.groupby(['Gnb'])['ChannelOccupancyNR'].mean()
+
+    data_my2 = pd.read_csv('valid_wifi.csv', delimiter=',')
+
+    rs = data_my.groupby(['Gnb'])['ChannelOccupancy'].mean()
+
+    data_my3 = pd.read_csv('valid_wifi.csv', delimiter=',')
+
+    gap = data_my.groupby(['Gnb'])['ChannelOccupancy'].mean()
+
+
+    data_matlab = pd.read_csv('coex_gap_wifi.csv', delimiter=',')
+
+    data_matlab_wifi = data_matlab.groupby(['nWifi'])['cotWifi'].mean()
+    data_matlab_gnb = data_matlab.groupby(['nWifi'])['cotNR'].mean()
+
+    ax1 = wifi.plot(title='Coexistance airtime', marker='o', legend=True, ylim=(0, 1))
+    #ax2 = data_my_gnb.plot(title='Coexistance airtime', marker='o', legend=True, ylim=(0, 1))
+    ax1 = data_matlab_wifi.plot(title='Coexistance airtime', marker='x', legend=True, ylim=(0, 1), linestyle='--')
+    ax2 = data_matlab_gnb.plot(title='Coexistance airtime', marker='x', legend=True, ylim=(0, 1), linestyle='--')
+
+    ax2.legend(['Coex_wifi', 'Coex_gnb', 'Matlab_wifi', 'Matalb_gnb'])
+    ax2.set_xlabel('Number of Wifi/NR nodes', fontsize=14)
+    ax2.set_ylabel('Channel occupancy time', fontsize=14)
+
+    plt.tight_layout()
+    plt.savefig('results/coex_comparison_gap3.png')
+
+
+
+
+
 
 
 if __name__ == "__main__":
     #print_collision_prob()
-    #print_airtime_34()
+    print_airtime_34()
     #print_airtime_norm_per_station()
     #print_airtime_per_station()
     #print_channel_occupancy()
@@ -478,7 +517,7 @@ if __name__ == "__main__":
     #COEXY
     #print_coexistance_airtime()
     #print_coexistance_airtime_my()
-    print_coex()
+    #print_coex()
     #print_matlab()
     #print_coex_gap_matlab()
 
