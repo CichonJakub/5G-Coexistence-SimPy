@@ -65,7 +65,8 @@ class Times:
         ack = Times._overhead + Times.ack_size  # [b]
         ack = self.ofdm_preamble + self.ofdm_signal + ack / self.ctr_rate  # [us]
         ack_tx_time = Times.t_sifs + ack
-        return math.ceil(ack_tx_time)  # [us]
+        # return math.ceil(ack_tx_time)  # [us]
+        return 44
 
     # # ACK Timeout
     # def get_ack_timeout():

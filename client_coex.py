@@ -22,6 +22,7 @@ def single_run(
     #                backoffs, airtime_data, airtime_control)
     run_simulation(stations_number, gnb_number, seeds, simulation_time,
                    Config(payload_size, cw_min, cw_max, r_limit, mcs_value),
+                   Config_NR(16, 9, 1000, 1000, 0, 3, cw_min, cw_max, 6),
                    backoffs, airtime_data, airtime_control, airtime_data_NR, airtime_control_NR)
 
 
@@ -32,20 +33,20 @@ if __name__ == "__main__":
     #  running diferent scenarios of simulation
 
     # performing single run
-    number = 1
-    single_run(seeds=145324
-               , stations_number=number, gnb_number=number, simulation_time=10, payload_size=1472, cw_min=15, cw_max=63, r_limit=7, mcs_value=7)
+    # number = 2
+    # single_run(seeds=7932
+    #            , stations_number=1, gnb_number=1, simulation_time=100, payload_size=1472, cw_min=15, cw_max=1023, r_limit=7, mcs_value=7)
 
-    # performing multiple runs
-    # list = []
-    # for radn in range(1, 10):
-    #     n = random.randint(1000, 10000)
-    #     list.append(n)
-    #
-    # print(list)
-    #
-    # for var in list:
-    #     #for k in range(2, 12):
-    #     # k = 4
-    #     single_run(seeds=var, stations_number=k, gnb_number=k, simulation_time=1, payload_size=1472, cw_min=15,
-    #                    cw_max=1023, r_limit=7, mcs_value=7)
+    #performing multiple runs
+    list = []
+    for radn in range(1, 15):
+        n = random.randint(1000, 10000)
+        list.append(n)
+
+    print(list)
+
+    for var in list:
+        for k in range(1, 5):
+        # k = 4
+            single_run(seeds=var, stations_number=k, gnb_number=k, simulation_time=100, payload_size=1472, cw_min=15,
+                       cw_max=63, r_limit=7, mcs_value=7)
