@@ -489,7 +489,7 @@ class Gnb:
         self.back_off_time = self.generate_new_back_off_time(self.failed_transmissions_in_row)
         m = self.config_nr.M
         prioritization_period_time = self.config_nr.deter_period + m * self.config_nr.observation_slot_duration
-        # self.back_off_time += prioritization_period_time  # add Priritization Period time to bacoff procedure
+        #self.back_off_time += prioritization_period_time  # add Priritization Period time to bacoff procedure
 
         while self.back_off_time > -1:
             # m = self.config_nr.M
@@ -877,7 +877,7 @@ def run_simulation(
     print(f" Wifi succ: {channel.succeeded_transmissions} fail: {channel.failed_transmissions}")
     print(f" NR succ: {channel.succeeded_transmissions_NR} fail: {channel.failed_transmissions_NR}")
 
-    with open("val/coex/coex5g_coexistence_rs_63v4.csv", mode='a', newline="") as result_file:
+    with open("val/coex/coex5g_coexistence_rs_63.csv", mode='a', newline="") as result_file:
         result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         # nodes = number_of_stations + number_of_gnb
