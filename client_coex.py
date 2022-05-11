@@ -39,14 +39,15 @@ if __name__ == "__main__":
 
     #performing multiple runs
     list = []
-    for radn in range(1, 15):
-        n = random.randint(1000, 10000)
+    for radn in range(1, 11):
+        n = random.randint(10, 1000)
         list.append(n)
 
     print(list)
 
     for var in list:
-        for k in range(1, 5):
+        for k in range(1, 9):
+        #for var in list:
         # k = 4
             single_run(seeds=var, stations_number=k, gnb_number=k, simulation_time=100, payload_size=1472, cw_min=15,
                        cw_max=63, r_limit=7, mcs_value=7)
