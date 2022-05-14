@@ -12,6 +12,7 @@ from typing import Dict, List
 from .Times import *
 from datetime import datetime
 
+output_csv = "output_test.csv"
 file_log_name = f"{datetime.today().strftime('%Y-%m-%d-%H-%M-%S')}.log"
 
 typ_filename = "RS_coex_1sta_1wifi2.log"
@@ -875,13 +876,29 @@ def run_simulation(
     print(f" Wifi succ: {channel.succeeded_transmissions} fail: {channel.failed_transmissions}")
     print(f" NR succ: {channel.succeeded_transmissions_NR} fail: {channel.failed_transmissions_NR}")
 
-    with open("val/coex/check/coex_gap_be_newPcol.csv", mode='a', newline="") as result_file:
+    # with open("val/coex/check/coex_gap_be_newPcol.csv", mode='a', newline="") as result_file:
+    #     result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #
+    #     # nodes = number_of_stations + number_of_gnb
+    #
+    #     result_adder.writerow(
+    #         [seed, number_of_stations, number_of_gnb, normalized_channel_occupancy_time, normalized_channel_efficiency,
+    #          p_coll,
+    #          normalized_channel_occupancy_time_NR, normalized_channel_efficiency_NR, p_coll_NR,
+    #          normalized_channel_occupancy_time_all, normalized_channel_efficiency_all])
+
+    write_header = True
+    if os.path.isfile(output_csv):
+        write_header = False
+    with open(output_csv, mode='a', newline="") as result_file:
         result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        # nodes = number_of_stations + number_of_gnb
+        if write_header:
+            result_adder.writerow(["Seed,WiFi,Gnb,ChannelOccupancyWiFi,ChannelEfficiencyWiFi,PcolWifi,ChannelOccupancyNR,ChannelEfficiencyNR,PcolNR,ChannelOccupancyAll,ChannelEfficiencyAll"])
 
         result_adder.writerow(
             [seed, number_of_stations, number_of_gnb, normalized_channel_occupancy_time, normalized_channel_efficiency,
              p_coll,
              normalized_channel_occupancy_time_NR, normalized_channel_efficiency_NR, p_coll_NR,
              normalized_channel_occupancy_time_all, normalized_channel_efficiency_all])
+
