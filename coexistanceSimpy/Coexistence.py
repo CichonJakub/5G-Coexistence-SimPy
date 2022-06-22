@@ -12,14 +12,14 @@ from typing import Dict, List
 from .Times import *
 from datetime import datetime
 
-output_csv = "output_test.csv"
+output_csv = "chap5/20_20/lool.csv"
 file_log_name = f"{datetime.today().strftime('%Y-%m-%d-%H-%M-%S')}.log"
 
 typ_filename = "RS_coex_1sta_1wifi2.log"
 
 logging.basicConfig(filename="",
                     format='%(asctime)s %(message)s',
-                    filemode='w')
+                    filemode='w ')
 logger = logging.getLogger()
 logger.setLevel(logging.CRITICAL)  # chose DEBUG to display stats in debug mode :)
 
@@ -61,8 +61,8 @@ class Config_NR:
     min_sync_slot_desync: int = 0
     # channel access class related:
     M: int = 3  # amount of observation slots to wait after deter perion in prioritization period
-    cw_min: int = 15
-    cw_max: int = 63
+    cw_min: int = 0
+    cw_max: int = 0
     mcot: int = 6  # max ocupancy time
 
 
@@ -79,11 +79,6 @@ def log(gnb, mes: str) -> None:
         f"{gnb.col}Time: {gnb.env.now} Station: {gnb.name} Message: {mes}"
     )
 
-
-# def log(station, mes: str):
-#     logging.info(
-#         f"{station.col}Time: {station.env.now} Station: {station.name} Message: {mes}"
-#     )
 
 class Station:
     def __init__(
@@ -111,6 +106,7 @@ class Station:
         self.channel.airtime_control.update({name: 0})
         self.first_interrupt = False
         self.back_off_time = 0
+        self.start = 0
 
     def start(self):
         while True:
@@ -124,7 +120,7 @@ class Station:
                 # self.process = None
 
     def wait_back_off(self):
-        global start
+        #global start
         self.back_off_time = self.generate_new_back_off_time(
             self.failed_transmissions_in_row)  # generating the new Back Off time
 
@@ -135,7 +131,7 @@ class Station:
                 self.back_off_time += Times.t_difs  # add DIFS time
                 log(self, f"Starting to wait backoff (with DIFS): ({self.back_off_time})u...")
                 self.first_interrupt = True
-                start = self.env.now  # store the current simulation time
+                self.start = self.env.now  # store the current simulation time
                 self.channel.back_off_list.append(self)  # join the list off stations which are waiting Back Offs
 
                 yield self.env.timeout(self.back_off_time)  # join the environment action queue
@@ -146,46 +142,22 @@ class Station:
                 self.channel.back_off_list.remove(self)  # leave the waiting list as Backoff was waited successfully
 
             except simpy.Interrupt:  # handle the interruptions from transmitting stations
-                if self.first_interrupt and start is not None:
+                if self.first_interrupt and self.start is not None:
                     #tak jest po mojemu:
                     log(self, "Waiting was interrupted, waiting to resume backoff...")
-                    all_waited = self.env.now - start
+                    all_waited = self.env.now - self.start
                     if all_waited <= Times.t_difs:
                         self.back_off_time -= Times.t_difs
-                        log(self, f"Interupted in DIFS ({Times.t_difs}), backoff {self.back_off_time}")
+                        log(self, f"Interupted in DIFS ({Times.t_difs}), backoff {self.back_off_time}, already waited: {all_waited}")
                     else:
                         back_waited = all_waited - Times.t_difs
                         slot_waited = int(back_waited / Times.t_slot)
                         self.back_off_time -= ((slot_waited * Times.t_slot) + Times.t_difs)
-                        # self.back_off_time -= (self.env.now - start)  # set the Back Off to the remaining one
-                        #self.back_off_time -= 9  # simulate the delay of sensing the channel state
                         log(self,
                             f"Completed slots(9us) {slot_waited} = {(slot_waited * Times.t_slot)}  plus DIFS time {Times.t_difs}")
                         log(self,
                             f"Backoff decresed by {((slot_waited * Times.t_slot) + Times.t_difs)} new Backoff {self.back_off_time}")
                     self.first_interrupt = False
-
-                    # log(self, "Waiting was interrupted, waiting to resume backoff...")
-                    # if self.first_interrupt and start is not None:
-                    #     # log(self, "Waiting was interrupted, waiting to resume backoff...")
-                    #     # if self.first_interrupt and start is not None:
-                    #     #log(self, f"Bacoff time reduced by: {(self.env.now - start)}")
-                    #     already_waited = self.env.now - start
-                    #     slots_waited = already_waited / 9
-                    #
-                    #     self.back_off_time -= (slots_waited * 9)  # set the Back Off to the remaining one
-                    #     self.first_interrupt = False
-
-                    # tak jest wg DCF SimPy
-                    # all_waited = self.env.now - start
-                    # if all_waited <= Times.t_difs:
-                    #     self.back_off_time -= Times.t_difs
-                    #     log(self, f"Interupted in DIFS ({Times.t_difs})")
-                    # else:
-                    #     self.back_off_time -= (self.env.now - start)  # set the Back Off to the remaining one
-                    #     self.back_off_time -= 9  # simulate the delay of sensing the channel state
-                    # log(self, f"Already waited {(self.env.now - start)}, new backoff: {self.back_off_time}")
-                    # self.first_interrupt = False
 
     def send_frame(self):
         self.channel.tx_list.append(self)  # add station to currently transmitting list
@@ -195,27 +167,18 @@ class Station:
         try:
             result = yield res | self.env.timeout(
                 0)  # try to hold transmitting lock(station with the longest frame will get this)
-            # maby lista
-            # kolizja osobne lsity dla gnb i wifi
-            # lista zobaczyc czy zajety kanal przez tx_list
-            #
             if res not in result:  # check if this station got lock, if not just wait you frame time
                 raise simpy.Interrupt("There is a longer frame...")
-                # yield self.env.timeout(self.frame_to_send.frame_time)
-                # return False
+
 
             with self.channel.tx_lock.request() as lock:  # this station has the longest frame so hold the lock
                 yield lock
-                # log(self, f'{self.channel.back_off_list}')
+
 
                 for station in self.channel.back_off_list:  # stop all station which are waiting backoff as channel is not idle
-                    # if station.process is not None:
-                    #     station.process.interrupt()
                     if station.process.is_alive:
                         station.process.interrupt()
                 for gnb in self.channel.back_off_list_NR:  # stop all station which are waiting backoff as channel is not idle
-                    # if gnb.process is not None:
-                    #     gnb.process.interrupt()
                     if gnb.process.is_alive:
                         gnb.process.interrupt()
 
@@ -256,8 +219,6 @@ class Station:
         return was_sent
 
     def check_collision(self):  # check if the collision occurred
-        # if (len(self.channel.tx_list) > 1 or len(
-        #         self.channel.tx_list_NR) > 1):  # check if there was more then one station transmitting
 
         if (len(self.channel.tx_list) + len(self.channel.tx_list_NR)) > 1 or (len(self.channel.tx_list) + len(self.channel.tx_list_NR)) == 0:
             self.sent_failed()
@@ -337,38 +298,25 @@ class Gnb:
         self.back_off_time = 0
         self.time_to_next_sync_slot = 0
         self.waiting_backoff = False
+        self.start_nr = 0
 
     def start(self):
 
         # yield self.env.timeout(self.desync)
         while True:
-            # loop with runn proces TO DO
-            # zainicjalizuj N, jako licznik ile stloów backoffu ma czekać startowo
-            # tak samo zainicjalizować jakiś różny desync time :P
-
             # self.transmission_to_send = self.gen_new_transmission()
             was_sent = False
             while not was_sent:
                 if gap:
-                    # self.process = self.env.process(self.wait_prioritization_period_gap())
-                    # yield self.process
                     self.process = self.env.process(self.wait_back_off_gap())
                     yield self.process
-                    # self.process = None
                     was_sent = yield self.env.process(self.send_transmission())
-                    # self.process = None
                 else:
-                    # self.process = self.env.process(self.wait_prioritization_period())
-                    # yield self.process
                     self.process = self.env.process(self.wait_back_off())
                     yield self.process
-                    # self.process = None
                     was_sent = yield self.env.process(self.send_transmission())
-                    # self.process = None
 
     def wait_back_off_gap(self):
-        # global start
-        global start
         self.back_off_time = self.generate_new_back_off_time(self.failed_transmissions_in_row)
         # adding pp to the backoff timer
         m = self.config_nr.M
@@ -380,12 +328,6 @@ class Gnb:
                 with self.channel.tx_lock.request() as req:  # waiting  for idle channel -- empty channel
                     yield req
 
-                # adding PP to Backoff
-                # m = self.config_nr.M
-                # prioritization_period_time = self.config_nr.deter_period + m * self.config_nr.observation_slot_duration
-                # self.back_off_time += prioritization_period_time  # add Priritization Period time to bacoff procedure
-
-                #self.back_off_time += prioritization_period_time
                 self.time_to_next_sync_slot = self.next_sync_slot_boundry - self.env.now
 
                 log(self, f'Backoff = {self.back_off_time} , and time to next slot: {self.time_to_next_sync_slot}')
@@ -393,10 +335,6 @@ class Gnb:
                     self.time_to_next_sync_slot += self.config_nr.synchronization_slot_duration
                     log(self,
                         f'Backoff > time to sync slot: new time to next possible sync +1000 = {self.time_to_next_sync_slot}')
-                    # case1 : time >= backoff -- gap istnieje lub =0
-                    # case2 : time < backoff --- wtedy nie da sie odczekac
-                    # musimy isc do nastepnego slotu i tam backoff --> czyli time = time + wartosc_slotu :D
-                    # reszta nromalnie
 
                 gap_time = self.time_to_next_sync_slot - self.back_off_time
                 log(self, f"Waiting gap period of : {gap_time} us")
@@ -405,17 +343,15 @@ class Gnb:
                 yield self.env.timeout(gap_time)
                 log(self, f"Finished gap period")
 
-                # must check if the channel is free + in case 2 or more gNBs start transmitting it must drop procedure
-                # not just wait till free
+
                 self.first_interrupt = True
 
-                start = self.env.now  # store the current simulation time
+                self.start_nr = self.env.now  # store the current simulation time
 
                 log(self, f'Channels in use by {self.channel.tx_lock.count} stations')
 
-                # checking if channel if idle /// mozna tez spradzac dlugoscia listy stacji ktore transmituja i to chyba bedzie lepsze
+                # checking if channel if idle
                 if (len(self.channel.tx_list_NR) + len(self.channel.tx_list)) > 0:
-                    # if self.channel.tx_lock.count > 0:
                     log(self, 'Channel busy -- waiting to be free')
                     with self.channel.tx_lock.request() as req:
                         yield req
@@ -423,10 +359,6 @@ class Gnb:
 
                 else:
                     log(self, 'Channel free')
-                    #potencjalny blad bo moze czekac iles? co jakby usunac???????/
-                    # with self.channel.tx_lock.request() as req:
-                    #     yield req
-
                     log(self, f"Starting to wait backoff: ({self.back_off_time}) us...")
                     self.channel.back_off_list_NR.append(self)  # join the list off stations which are waiting Back Offs
                     self.waiting_backoff = True
@@ -442,14 +374,9 @@ class Gnb:
 
             except simpy.Interrupt:  # handle the interruptions from transmitting stations
                 log(self, "Waiting was interrupted")
-                # self.back_off_time -= (self.env.now - start)  # set the Back Off to the remaining one
-                # odejmowac tylko pelne 9us sloty
-                # if start == None:
-                #     start = 0
-
-                if self.first_interrupt and start is not None and self.waiting_backoff is True:
+                if self.first_interrupt and self.start is not None and self.waiting_backoff is True:
                     log(self, "Backoff was interrupted, waiting to resume backoff...")
-                    already_waited = self.env.now - start
+                    already_waited = self.env.now - self.start_nr
 
                     if already_waited <= prioritization_period_time:
                         self.back_off_time -= prioritization_period_time
@@ -466,32 +393,14 @@ class Gnb:
                     self.first_interrupt = False
                     self.waiting_backoff = False
 
-
-                    # log(self, "Backoff was interrupted, waiting to resume backoff...")
-                    # already_waited = self.env.now - start
-                    #
-                    # if already_waited <= prioritization_period_time:
-                    #     self.back_off_time -= prioritization_period_time
-                    #     log(self, "Interrupted in PP time")
-                    # else:
-                    #     self.back_off_time -= already_waited  # set the Back Off to the remaining one
-
-                    # log(self, f"already waited {already_waited} Backoff us, new Backoff {self.back_off_time}")
-                    # self.back_off_time += prioritization_period_time # addnin new PP before next weiting
-                    # self.first_interrupt = False
-                    # self.waiting_backoff = False
-
     def wait_back_off(self):
         # Wait random number of slots N x OBSERVATION_SLOT_DURATION us
         global start
         self.back_off_time = self.generate_new_back_off_time(self.failed_transmissions_in_row)
         m = self.config_nr.M
         prioritization_period_time = self.config_nr.deter_period + m * self.config_nr.observation_slot_duration
-        #self.back_off_time += prioritization_period_time  # add Priritization Period time to bacoff procedure
 
         while self.back_off_time > -1:
-            # m = self.config_nr.M
-            # prioritization_period_time = self.config_nr.deter_period + m * self.config_nr.observation_slot_duration
 
             try:
                 with self.channel.tx_lock.request() as req:  # waiting  for idle channel -- empty channel
@@ -528,48 +437,12 @@ class Gnb:
                     self.first_interrupt = False
                     self.waiting_backoff = False
 
-
-
-                # log(self, "Waiting was interrupted, waiting to resume backoff...")
-                # if self.first_interrupt and start is not None:
-                #
-                #     already_waited = self.env.now - start
-                #     slots_waited = int(already_waited / 9)
-                #     log(self, f"Bacoff time reduced by: {(self.env.now - start)}")
-                #     self.back_off_time -= (slots_waited * 9)  # set the Back Off to the remaining one
-                #     self.first_interrupt = False
-
-                # log(self, "Waiting was interrupted, waiting to resume backoff...")
-                # if self.first_interrupt and start is not None:
-                #     already_waited = self.env.now - start
-                #     slots_waited = already_waited / 9
-                #
-                #
-                #     log(self, f"Bacoff time reduced by: {(self.env.now - start)}")
-                #     self.back_off_time -= (self.env.now - (slots_waited * 9))  # set the Back Off to the remaining one
-                #     self.first_interrupt = False
-                #     self.waiting_backoff = False
-
-                # log(self, "Backoff was interrupted, waiting to resume backoff...")
-                # already_waited = self.env.now - start
-                #
-                # if already_waited <= prioritization_period_time:
-                #     self.back_off_time -= prioritization_period_time
-                #     log(self, "Interrupted in PP time")
-                # else:
-                #     self.back_off_time -= already_waited  # set the Back Off to the remaining one
-                #
-                # log(self, f"already waited {already_waited} Backoff us, new Backoff {self.back_off_time}")
-                # self.first_interrupt = False
-                # self.waiting_backoff = False
-
-
     def sync_slot_counter(self):
         # Process responsible for keeping the next sync slot boundry timestamp
         self.desync = random.randint(self.config_nr.min_sync_slot_desync, self.config_nr.max_sync_slot_desync)
         self.next_sync_slot_boundry = self.desync
         log(self, f"Selected random desync to {self.desync} us")
-        yield self.env.timeout(self.desync)  # randomly desync tx starting points
+        yield self.env.timeout(self.desync)  # waiting randomly chosen desync time
         while True:
             self.next_sync_slot_boundry += self.config_nr.synchronization_slot_duration
             log(self, f"Next synch slot boundry is: {self.next_sync_slot_boundry}")
@@ -587,21 +460,14 @@ class Gnb:
 
             if res not in result:  # check if this station got lock, if not just wait you frame time
                 raise simpy.Interrupt("There is a longer frame...")
-                # self.env.timeout(self.transmission_to_send.transmission_time)
-                # return False
 
             with self.channel.tx_lock.request() as lock:  # this station has the longest frame so hold the lock
                 yield lock
-                # log(self, f'{self.channel.back_off_list_NR}')
 
                 for station in self.channel.back_off_list:  # stop all station which are waiting backoff as channel is not idle
-                    # if station.process is not None:
-                    #     station.process.interrupt()
                     if station.process.is_alive:
                         station.process.interrupt()
                 for gnb in self.channel.back_off_list_NR:  # stop all station which are waiting backoff as channel is not idle
-                    # if gnb.process is not None:
-                    #     gnb.process.interrupt()
                     if gnb.process.is_alive:
                         gnb.process.interrupt()
 
@@ -617,7 +483,6 @@ class Gnb:
                     log(self, f"adding rs time to control data: {self.transmission_to_send.rs_time}")
                     self.channel.airtime_data_NR[self.name] += self.transmission_to_send.airtime
                     log(self, f"adding data airtime to data: {self.transmission_to_send.airtime}")
-                    # yield self.env.timeout(self.times.get_ack_frame_time())  # wait ack
                     self.channel.tx_list_NR.clear()  # clear transmitting list
                     self.channel.tx_list.clear()
                     self.channel.tx_queue.release(res)  # leave the transmitting queue
@@ -629,7 +494,7 @@ class Gnb:
             self.channel.tx_queue.release(res)  # leave the transmitting queue
             self.channel.tx_queue = simpy.PreemptiveResource(self.env,
                                                              capacity=1)  # create new empty transmitting queue
-            # yield self.env.timeout(self.times.ack_timeout)  # simulate ack timeout after failed transmission
+            # yield self.env.timeout(self.times.ack_timeout)
             return False
 
         except simpy.Interrupt:  # this station does not have the longest frame, waiting frame time
@@ -639,8 +504,7 @@ class Gnb:
         return was_sent
 
     def check_collision(self):  # check if the collision occurred
-        # if len(self.channel.tx_list_NR) > 1 or len(
-        #         self.channel.tx_list) > 1:  # check if there was more then one station transmitting
+
         if gap:
             # if (len(self.channel.tx_list) + len(self.channel.tx_list_NR)) > 1 and self.waiting_backoff is True:
             if (len(self.channel.tx_list) + len(self.channel.tx_list_NR)) > 1 or (len(self.channel.tx_list) + len(self.channel.tx_list_NR)) == 0:
@@ -684,8 +548,6 @@ class Gnb:
         self.failed_transmissions_in_row += 1
         log(self, self.channel.failed_transmissions_NR)
         if self.transmission_to_send.number_of_retransmissions > 7:
-            # self.frame_to_send = self.generate_new_frame()
-            #self.transmission_to_send = self.gen_new_transmission();
             self.failed_transmissions_in_row = 0
 
     def sent_completed(self):
@@ -695,8 +557,6 @@ class Gnb:
         self.channel.succeeded_transmissions_NR += 1
         self.succeeded_transmissions += 1
         self.failed_transmissions_in_row = 0
-        # self.channel.bytes_sent += self.frame_to_send.data_size
-        # self.channel.airtime_data[self.name] += self.transmission_to_send.transmission_time
         return True
 
 
@@ -794,8 +654,11 @@ def run_simulation(
     environment.run(until=simulation_time * 1000000)
 
     if number_of_stations != 0:
-        p_coll = "{:.4f}".format(
-            channel.failed_transmissions / (channel.failed_transmissions + channel.succeeded_transmissions))
+        if(channel.failed_transmissions + channel.succeeded_transmissions) != 0:
+            p_coll = "{:.4f}".format(
+                channel.failed_transmissions / (channel.failed_transmissions + channel.succeeded_transmissions))
+        else:
+            p_coll = 0
     else:
         p_coll = 0
 
@@ -809,7 +672,7 @@ def run_simulation(
     else:
         p_coll_NR = 0
 
-    # normalizedChannelOccupancyTime = channel.succeeded_transmissions * ()
+    # DETAILED OUTPUTS:
 
     # print(
     #     f"SEED = {seed} N_stations:={number_of_stations}  CW_MIN = {config.cw_min} CW_MAX = {config.cw_max}  PCOLL: {p_coll} THR:"
@@ -876,16 +739,14 @@ def run_simulation(
     print(f" Wifi succ: {channel.succeeded_transmissions} fail: {channel.failed_transmissions}")
     print(f" NR succ: {channel.succeeded_transmissions_NR} fail: {channel.failed_transmissions_NR}")
 
-    # with open("val/coex/check/coex_gap_be_newPcol.csv", mode='a', newline="") as result_file:
-    #     result_adder = csv.writer(result_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #
-    #     # nodes = number_of_stations + number_of_gnb
-    #
-    #     result_adder.writerow(
-    #         [seed, number_of_stations, number_of_gnb, normalized_channel_occupancy_time, normalized_channel_efficiency,
-    #          p_coll,
-    #          normalized_channel_occupancy_time_NR, normalized_channel_efficiency_NR, p_coll_NR,
-    #          normalized_channel_occupancy_time_all, normalized_channel_efficiency_all])
+
+    fairness = (normalized_channel_occupancy_time_all**2) / (2 * (normalized_channel_occupancy_time**2 + normalized_channel_occupancy_time_NR**2 ))
+
+    print(f'fairness: {fairness}')
+    joint = fairness * normalized_channel_occupancy_time_all
+    print(f'joint: {joint}')
+
+
 
     write_header = True
     if os.path.isfile(output_csv):
@@ -897,7 +758,7 @@ def run_simulation(
             result_adder.writerow(["Seed,WiFi,Gnb,ChannelOccupancyWiFi,ChannelEfficiencyWiFi,PcolWifi,ChannelOccupancyNR,ChannelEfficiencyNR,PcolNR,ChannelOccupancyAll,ChannelEfficiencyAll"])
 
         result_adder.writerow(
-            [seed, number_of_stations, number_of_gnb, normalized_channel_occupancy_time, normalized_channel_efficiency,
+            [seed, config.cw_max, fairness, number_of_stations, number_of_gnb, normalized_channel_occupancy_time, normalized_channel_efficiency,
              p_coll,
              normalized_channel_occupancy_time_NR, normalized_channel_efficiency_NR, p_coll_NR,
              normalized_channel_occupancy_time_all, normalized_channel_efficiency_all])
