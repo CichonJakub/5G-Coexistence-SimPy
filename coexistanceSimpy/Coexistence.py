@@ -61,8 +61,8 @@ class Config_NR:
     min_sync_slot_desync: int = 0
     # channel access class related:
     M: int = 3  # amount of observation slots to wait after deter perion in prioritization period
-    cw_min: int = 0
-    cw_max: int = 0
+    cw_min: int = 15
+    cw_max: int = 63
     mcot: int = 6  # max ocupancy time
 
 
@@ -641,14 +641,15 @@ def run_simulation(
         airtime_data_NR,
         airtime_control_NR
     )
-    config_nr = Config_NR()
+    # config_nr = Config_NR()
     # config_wifi = Config()
 
     for i in range(1, number_of_stations + 1):
         Station(environment, "Station {}".format(i), channel, config)
 
     for i in range(1, number_of_gnb + 1):
-        Gnb(environment, "Gnb {}".format(i), channel, config_nr)
+        # Gnb(environment, "Gnb {}".format(i), channel, config_nr)
+        Gnb(environment, "Gnb {}".format(i), channel, configNr)
 
     # environment.run(until=simulation_time * 1000000) 10^6 milisekundy
     environment.run(until=simulation_time * 1000000)
