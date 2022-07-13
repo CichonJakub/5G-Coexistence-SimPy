@@ -69,7 +69,7 @@ joint: 0.4984111300570852
 
 ### Changing number of nodes
 
-Running simulations in which number of Wi-Fi nodes (AP) is equal to number of NR-U nodes (gNB), and is increasing in every step from start to the end value (can be reacted with different seeds)
+Running simulations in which number of Wi-Fi nodes (AP) is equal to number of NR-U nodes (gNB), and is increasing in every step from start to the end value (can be repeated with different seeds)
 
 ```bash
 python changingNodesNumber.py --help
